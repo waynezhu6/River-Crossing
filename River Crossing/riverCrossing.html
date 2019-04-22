@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html>
+
+    <head>
+    
+        <style>
+        
+            html{
+                box-sizing: border-box;
+                font-family: 'Signika', sans-serif;
+                user-select: none;
+            }
+            
+            *, *::before, *::after{
+                box-sizing: inherit;
+            }
+            
+            body{
+                width: 100%;
+                height: 100%;
+                margin: 0;
+            }
+            
+            #container{
+                background-color: white;
+                height: 300px;
+                width: 1000px;
+                margin: auto;
+                position: relative;
+            }
+            
+            #leftGround{
+                width: 350px;
+                height: 75px;
+                background-color: dimgray;
+                position: absolute;
+                left: 0px;
+                bottom: 0px;
+            }
+            
+            #rightGround{
+                width: 350px;
+                height: 75px;
+                background-color: dimgray;
+                position: absolute;
+                right: 0px;
+                bottom: 0px;                
+            }
+            
+            #bridge{
+                width: 300px;
+                height: 10px;
+                background-color: dimgray;
+                position: absolute;
+                bottom: 65px;
+                left: 350px;
+            }
+            
+            .player{
+                width: 30px;
+                height: 50px;
+                background-color: white;
+                border: 2px solid black;
+                border-radius: 5px;
+                z-index: 1;
+                text-align: center;
+                user-select: none;
+                font-size: 16px;
+            }
+            
+            .shell{
+                width: 30px;
+                height: 50px;
+                background-color: transparent;
+                border: 2px dotted black;
+                border-radius: 5px;
+                z-index: 0;
+            }
+            
+            .button{
+                width: 60px;
+                height: 25px;
+                background-color: white;
+                position: absolute;
+                text-align: center;
+                font-size: 18px;
+                user-select: none;
+                border: 2px solid black;
+                border-radius: 5px;
+            }
+            
+            #p0{
+                position: absolute;
+                bottom: 75px;
+                left: 20px;               
+            }
+            
+            #p1{
+                position: absolute;
+                bottom: 75px;
+                left: 70px;
+            }
+            
+            #p2{
+                position: absolute;
+                bottom: 75px;
+                left: 120px;
+            }
+            
+            #p3{
+                position: absolute; 
+                bottom: 75px;
+                left: 170px;
+            }
+            
+            #slot0{
+                position: absolute; 
+                bottom: 75px;
+                left: 250px;
+            }
+            
+            #slot1{
+                position: absolute; 
+                bottom: 75px;
+                left: 300px;
+            }          
+                        
+            #slot2{
+                position: absolute; 
+                bottom: 75px;
+                right: 250px;
+            }
+            
+            #slot3{
+                position: absolute; 
+                bottom: 75px;
+                right: 300px;
+            }
+            
+            #torch{
+                width: 40px;
+                height: 20px;
+                position: absolute;
+                z-index: 2;
+                bottom: 85px;
+                left: 28px;
+                user-select: none;
+            }
+            
+            #leftButton{
+                left: 260px;
+                top: 120px;
+            }
+            
+            #rightButton{
+                right: 260px;
+                top: 120px;
+            }
+            
+            #infoText{
+                display: block;
+                width: 1000px;
+                margin: 25px auto;
+            }
+            
+            #timer{
+                font-size: 20px;
+            }
+        
+        </style>
+        
+    </head>
+    
+    <body>
+    
+        <div id = "container">
+        
+            <div id = "leftGround"></div>
+            <div id = "rightGround"></div>
+            <div id = "bridge"></div>
+            
+            <div id = "p0" class = "player torched" onmousedown = playerSelected(this)>1</div>
+            <div id = "p1" class = "player" onmousedown = playerSelected(this)>2</div>
+            <div id = "p2" class = "player" onmousedown = playerSelected(this)>5</div>
+            <div id = "p3" class = "player" onmousedown = playerSelected(this)>8</div>
+            
+            <img src="torch.png" alt="Torch" id = "torch" onmousedown = "torchDrag(this)" draggable = "false">
+            
+            <div id = "slot0" class = "shell"></div>
+            <div id = "slot1" class = "shell"></div>
+            
+            <div id = "slot2" class = "shell"></div>
+            <div id = "slot3" class = "shell"></div>
+            
+            <div id = "leftButton" class = "button" onclick = "lBtnClick()">►</div>
+            <div id = "rightButton" class = "button" onclick = "rBtnClick()">◄</div>
+            
+            <div id = "timer">0 Minutes</div>
+            
+        </div>
+        
+        <div id = "infoText">Four people come to a river in the night. There is a narrow bridge, but it can only hold two people at a time. They have one torch and, because it's night, the torch has to be used when crossing the bridge. Person A can cross the bridge in 1 minute, B in 2 minutes, C in 5 minutes, and D in 8 minutes. When two people cross the bridge together, they must move at the slower person's pace. The question is, can they all get across the bridge if the torch lasts only 15 minutes?</div>
+        
+        <script>
+            
+            var people = [
+                {id: 0, ref: document.getElementById("p0"), pos: "l", torch: true, slot: -1, value: 1},
+                {id: 1, ref: document.getElementById("p0"), pos: "l", torch: false, slot: -1, value: 2},
+                {id: 2, ref: document.getElementById("p0"), pos: "l", torch: false, slot: -1, value: 5},
+                {id: 3, ref: document.getElementById("p0"), pos: "l", torch: false, slot: -1, value: 8}
+            ];
+            
+            var slots = [
+                {person: -1, empty: true},
+                {person: -1, empty: true},
+                {person: -1, empty: true},
+                {person: -1, empty: true}
+            ]
+            
+            var x = 0;
+            var y = 0;
+            var down = false;
+            var timeElapsed = 0;
+            
+            var torch = {person: 0, ref: document.getElementById("torch"), pos: "l"};
+            
+            function playerSelected(object)
+            {
+                var tempID = object.id.slice(1,2)
+                if(people[tempID].pos == "l")
+                {
+                    if(slots[0].empty)
+                    {
+                        people[tempID].pos = "s";
+                        slots[0].empty = false;
+                        people[tempID].slot = 0;
+                        slots[0].person = tempID;
+                    }
+                    else if(slots[1].empty)
+                    {
+                        people[tempID].pos = "s";
+                        slots[1].empty = false;
+                        people[tempID].slot = 1;
+                        slots[1].person = tempID;
+                    }
+                }
+                else if(people[tempID].pos == "r")
+                {
+                    console.log("true");
+                    if(slots[2].empty)
+                    {
+                        people[tempID].pos = "s";
+                        slots[2].empty = false;
+                        people[tempID].slot = 2;
+                        slots[2].person = tempID;
+                    }
+                    else if(slots[3].empty)
+                    {
+                        people[tempID].pos = "s";
+                        slots[3].empty = false;
+                        people[tempID].slot = 3;
+                        slots[3].person = tempID;
+                    }
+                }
+                else if(people[tempID].pos == "s")
+                {
+                    if(people[tempID].slot < 2)
+                    {
+                        people[tempID].pos = "l";
+                        slots[people[tempID].slot].empty = true;
+                        people[tempID].slot = -1;
+                        slots[3].person = -1;
+                    }
+                    else
+                    {
+                        people[tempID].pos = "r";
+                        slots[people[tempID].slot].empty = true;
+                        people[tempID].slot = -1;
+                        slots[3].person = -1;
+                    }
+                }
+                repositionPerson(tempID);
+            }
+            
+            function repositionPerson(id)
+            {
+                var strTemp = "p" + id;
+                var element = document.getElementById(strTemp);
+                
+                if(people[id].pos == "l")
+                {
+                    element.style.left = id * 50 + 20 + "px";
+                }
+                else if(people[id].pos == "r")
+                {
+                    element.style.left = 1000 - (id * 50 + 50) + "px";
+                }
+                else if(people[id].pos == "s")
+                {
+                    if(people[id].slot == 0)
+                    {
+                        element.style.left = "250px";
+                    }
+                    else if(people[id].slot == 1)
+                    {
+                        element.style.left = "300px";
+                    }
+                    else if(people[id].slot == 2)
+                    {
+                        element.style.left = "720px";
+                    }
+                    else if(people[id].slot == 3)
+                    {
+                        element.style.left = "670px";
+                    }
+                }
+                positionTorch(torch.person);
+            }
+            
+            function lBtnClick()
+            {
+                if(people[torch.person].slot == 0 || people[torch.person].slot == 1)
+                {
+                    var largestValue = 0;
+                    
+                    for(var i = 0; i < 2; i++)
+                    {
+                        if(!slots[i].empty)
+                        {
+                            people[slots[i].person].pos = "r";
+                            people[slots[i].person].slot = -1;
+                            repositionPerson(slots[i].person);
+                            
+                            if(people[slots[i].person].value > largestValue)
+                            {
+                                largestValue = people[slots[i].person].value;
+                            }
+                            
+                            if(torch.person == slots[i].person)
+                            {
+                                if(torch.pos == "l")
+                                {
+                                    torch.pos = "r";
+                                }
+                                else if(torch.pos == "r")
+                                {
+                                    torch.pos = "l";
+                                }
+                            }
+                            
+                            slots[i].empty = true;
+                            slots[i].person = -1;
+                        }
+                    }
+                    incrementTimer(largestValue);
+                }               
+            }
+            
+            function rBtnClick()
+            {
+                if(people[torch.person].slot == 2 || people[torch.person].slot == 3)
+                {
+                    var largestValue = 0;
+                    
+                    for(var i = 2; i < 4; i++)
+                    {
+                        if(!slots[i].empty)
+                        {
+                            people[slots[i].person].pos = "l";
+                            people[slots[i].person].slot = -1;
+                            repositionPerson(slots[i].person);
+                            
+                            if(people[slots[i].person].value > largestValue)
+                            {
+                                largestValue = people[slots[i].person].value;
+                            }
+                            
+                            if(torch.person == slots[i].person)
+                            {
+                                if(torch.pos == "l")
+                                {
+                                    torch.pos = "r";
+                                }
+                                else if(torch.pos == "r")
+                                {
+                                    torch.pos = "l";
+                                }
+                            }
+                            
+                            slots[i].empty = true;
+                            slots[i].person = -1;
+                        }
+                    }
+                    incrementTimer(largestValue);
+                }
+            }
+            
+            function torchDrag(object)
+            {
+                x = parseInt(window.getComputedStyle(object).getPropertyValue("left"));
+                y = parseInt(window.getComputedStyle(object).getPropertyValue("bottom"));
+                down = true;
+            }
+            
+            document.onmouseup = (function(e){
+                var dX = e.clientX - parseInt(window.getComputedStyle(container).marginLeft) - 20;
+                var dY = e.clientY - 10;
+
+                if(down)
+                {
+                    var dropped = true;
+                    for(var i = 0; i < 4; i++)
+                    {
+                        if(people[i].pos == "l" && torch.pos == "l")
+                        {
+                            if(dX >= i * 50 && dX <= i * 50 + 30)
+                            {
+                                torch.person = i;
+                                positionTorch(torch.person);
+                                dropped = false;
+                                torch.pos = "l"
+                                break;
+                            }
+                        }
+                        else if(people[i].pos == "r" && torch.pos == "r")
+                        {
+                            if(dX >= 1000 - i * 50 - 70 && dX <= 1000 - i * 50 - 40)
+                            {
+                                torch.person = i;
+                                positionTorch(torch.person);
+                                dropped = false;
+                                torch.pos = "r";
+                                break;
+                            }
+                        }
+                        else if(people[i].pos == "s")
+                        {
+                            if(people[i].slot == 0 && torch.pos == "l")
+                            {
+                                console.log(dX);
+                                if(dX >= 230 && dX <= 260)
+                                {
+                                    console.log("true");
+                                    torch.person = i;
+                                    positionTorch(torch.person);
+                                    dropped = false;
+                                    torch.pos = "l";
+                                    break;
+                                }
+                            }
+                            else if(people[i].slot == 1 && torch.pos == "l")
+                            {
+                                if(dX >= 280 && dX <= 310)
+                                {
+                                    torch.person = i;
+                                    positionTorch(torch.person);
+                                    dropped = false;
+                                    torch.pos = "l";
+                                    break;
+                                }
+                            }
+                            else if(people[i].slot == 2 && torch.pos == "r")
+                            {
+                                if(dX >= 700 && dX <= 730)
+                                {
+                                    torch.person = i;
+                                    positionTorch(torch.person);
+                                    dropped = false;
+                                    torch.pos = "r";
+                                    break;
+                                }
+                            }
+                            else if(people[i].slot == 3 && torch.pos == "r")
+                            {
+                                if(dX >= 650 && dX <= 680)
+                                {
+                                    torch.person = i;
+                                    positionTorch(torch.person);
+                                    dropped = false;
+                                    torch.pos = "r";
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    if(dropped)
+                    {
+                        torch.ref.style.left = x + "px";
+                        torch.ref.style.top = "195px";
+                    }
+                }
+                down = false;
+            });
+            
+            var container = document.getElementById("container");
+
+            document.onmousemove = (function(e){
+                if(down)
+                {
+                    torch.ref.style.left = e.clientX - parseInt(window.getComputedStyle(container).marginLeft) - 20 + "px";
+                    torch.ref.style.top = e.clientY - 10 + "px";
+                }
+            });
+            
+            function positionTorch(index)
+            {
+                var strTemp = "p" + index;
+                var element = document.getElementById(strTemp);
+                torch.ref.style.left = parseInt(window.getComputedStyle(element).left) + 8 + "px";
+                torch.ref.style.top = "195px";
+            }
+            
+            function incrementTimer(value)
+            {
+                document.getElementById("timer").innerHTML = timeElapsed + value + " Minutes";
+                timeElapsed = timeElapsed + value;
+            }
+            
+        </script>
+    
+    </body>
+
+</html>
